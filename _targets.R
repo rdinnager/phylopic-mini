@@ -33,8 +33,8 @@ targets <- list(
   tar_target(local_files, file.path("data/phylopic/pngs", basename(png_urls)), format = "file",
              pattern = map(png_files)),
   
-  # tar_target(pngs, download_phylopics(png_files, local_files), format = "file", 
-  #            pattern = map(png_files, local_files)),
+  tar_target(pngs, download_phylopics(png_files, local_files), format = "file",
+             pattern = map(png_files, local_files)),
   
   NULL
   
