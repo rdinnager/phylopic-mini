@@ -9,7 +9,7 @@ source("R/functions.R")
 
 # Set target-specific options such as packages.
 options(tidyverse.quiet = TRUE)
-tar_option_set(packages = c("dplyr", "rphylopic", "tidyr", "purrr"))
+tar_option_set(packages = c("dplyr", "rphylopic", "tidyr", "purrr", "ape"))
 
 # Define targets
 targets <- list(
@@ -27,14 +27,27 @@ targets <- list(
   tar_target(png_urls, map2_chr(pic_data, max_res,
                                 ~.x$pngFiles[[.y]]$url)),
   
-  tar_target(png_files, paste0("http://phylopic.org", png_urls), format = "url", 
+  tar_target(png_files, paste0("http://phylopic.org", png_urls), 
              pattern = map(png_urls)),
   
-  tar_target(local_files, file.path("data/phylopic/pngs", basename(png_urls)), format = "file",
-             pattern = map(png_files)),
+  tar_target(local_files, file.path("data/phylopic/pngs", basename(png_urls)),
+             pattern = map(png_urls)),
   
-  tar_target(pngs, download_phylopics(png_files, local_files), format = "file",
+  tar_target(pngs, download_phylopics(png_files, local_files),
              pattern = map(png_files, local_files)),
+  
+  tar_target(files_unedited, file.path("data/phylopic/mini_unedited", basename(local_files)),
+             pattern = map(local_files)),
+  
+  tar_target(mini_unedited, make_mini_unedited(local_files, files_unedited),
+             pattern = map(local_files, files_unedited)),
+  
+  tar_target(otol_file, "data/OToL/opentree12.3_tree/labelled_supertree/labelled_supertree_ottnames.tre",
+             format = "file"),
+  
+  tar_target(otol, ape::read.tree(otol_file)),
+  
+  tar_target(otol_phylopic, map_phylopic_to_otol(otol, pic_data)),
   
   NULL
   
