@@ -9,7 +9,8 @@ source("R/functions.R")
 
 # Set target-specific options such as packages.
 options(tidyverse.quiet = TRUE)
-tar_option_set(packages = c("dplyr", "rphylopic", "tidyr", "purrr", "ape"))
+tar_option_set(packages = c("dplyr", "rphylopic", "tidyr", "purrr", "ape",
+                            "ape", "igraph"))
 
 # Define targets
 targets <- list(
@@ -42,12 +43,12 @@ targets <- list(
   tar_target(mini_unedited, make_mini_unedited(local_files, files_unedited),
              pattern = map(local_files, files_unedited)),
   
-  tar_target(otol_file, "data/OToL/opentree12.3_tree/labelled_supertree/labelled_supertree_ottnames.tre",
-             format = "file"),
+  tar_target(phylopic_taxo, get_taxonomy(pic_data),
+             pattern = map(pic_data),
+             iteration = "list",
+             error = "continue"),
   
-  tar_target(otol, ape::read.tree(otol_file)),
-  
-  tar_target(otol_phylopic, map_phylopic_to_otol(otol, pic_data)),
+  tar_target(phylopic_tree, make_phylopic_tree(phylopic_taxo, pic_data)),
   
   NULL
   
