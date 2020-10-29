@@ -48,7 +48,7 @@ targets <- list(
              iteration = "list",
              error = "continue"),
   
-  tar_target(phylopic_tree, make_phylopic_tree(phylopic_taxo, pic_data)),
+  tar_target(phylopic_tree_ig, make_phylopic_tree(phylopic_taxo, pic_data)),
   
   NULL
   

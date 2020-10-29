@@ -111,15 +111,54 @@ make_phylopic_tree <- function(phylopic_taxo, pic_data) {
                                             -1L,
                                             .x$citationStart - 1L)))
   
-  lineage_dfs <- imap_dfr(names_uncited,
+  ## add edge for missing tips
+  missing_tips <- map2(names_uncited,
+                       tip_names,
+                       possibly(~!.y %in% .x$string,
+                                otherwise = FALSE)) %>%
+    modify_if(~length(.x) == 0,
+              ~FALSE) %>%
+    unlist()
+  
+  #x <- names_uncited[missing_tips][[1]]
+  add_tip_edge <- function(x, tip_name) {
+    
+    if(length(x$inclusions) > 0) {
+      graph_df <- x$inclusions %>%
+        as_tibble()
+      
+      graph_ig <- graph_from_data_frame(graph_df, directed = TRUE)
+      
+      ## find end vertice
+      v_degs <- degree(graph_ig, mode = "out")
+      end <- names(v_degs[v_degs == 0])[1] %>%
+        as.numeric()
+      
+      x$string <- c(x$string, tip_name)
+      x$inclusions <- rbind(x$inclusions,
+                            c(end, max(x$inclusions) + 1L))
+    
+    }
+    
+    x
+    
+  }
+  
+  new_names <- map_if(seq_along(names_uncited),
+                          ~missing_tips[.x],
+                          ~add_tip_edge(names_uncited[[.x]],
+                                        tip_names[[.x]]),
+                      .else = ~names_uncited[[.x]]) 
+  
+  
+  lineage_dfs <- imap_dfr(new_names,
                           possibly(~.x$string[.x$inclusions + 1L] %>%
                                      matrix(nrow = nrow(.x$inclusions)) %>%
                                      as_tibble() %>%
                                      mutate(tip_num = .y),
                                    otherwise = tibble())) %>%
     drop_na()
-  
-  ## add edge for missing tips
+     
   
   tree_ig <- graph_from_data_frame(lineage_dfs)
   
@@ -131,7 +170,13 @@ make_phylopic_tree <- function(phylopic_taxo, pic_data) {
   tree_ig <- induced_subgraph(tree_ig, reachable)
   
   tree <- dominator_tree(tree_ig, "Pan-Biota")$domtree
-    
+  
+  #sum(tip_names %in% names(V(tree)))
+  
+  
+  
+  return(tree)
+  
   out <- degree(tree, mode = "out")
   tips <- names(out)[out == 0]
   n_tips <- length(tips)
