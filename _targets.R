@@ -5,12 +5,13 @@ library(targets)
 # Define custom functions and other global objects.
 # This is where you write source(\"R/functions.R\")
 # if you keep your functions in external scripts.
+source("packages.R")
 source("R/functions.R")
 
 # Set target-specific options such as packages.
 options(tidyverse.quiet = TRUE)
 tar_option_set(packages = c("dplyr", "rphylopic", "tidyr", "purrr", "ape",
-                            "ape", "igraph"))
+                            "ape", "igraph", "readr"))
 
 # Define targets
 targets <- list(
@@ -48,7 +49,14 @@ targets <- list(
              iteration = "list",
              error = "continue"),
   
-  tar_target(phylopic_tree_ig, make_phylopic_tree(phylopic_taxo, pic_data)),
+  tar_target(phylopic_tree_ig, make_phylopic_tree(phylopic_taxo, pic_data, files_unedited)),
+  
+  tar_target(phylopic_tree_ig_file,
+             write_phylopic_tree_ig(phylopic_tree_ig, "data/tree/phylopic_tree_ig.rds"),
+             format = "file"),
+  
+  tar_target(phylopic_net_vis,
+             make_phylopic_net_vis(phylopic_tree_ig)),
   
   NULL
   
